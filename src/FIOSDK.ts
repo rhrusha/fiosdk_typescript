@@ -1,37 +1,20 @@
 import { Fio } from '@fioprotocol/fiojs'
 import {
   AbiResponse,
-  AddPublicAddressResponse,
-  CancelFundsRequestResponse,
-  RemovePublicAddressesResponse,
-  RemoveAllPublicAddressesResponse,
-  BurnFioAddressResponse,
-  TransferFioAddressResponse,
-  TransferFioDomainResponse,
   AvailabilityResponse,
   BalanceResponse,
   FioFeeResponse,
   FioNamesResponse,
   PendingFioRequestsResponse,
   PublicAddressResponse,
-  RecordObtDataResponse,
-  RegisterFioAddressResponse,
-  RegisterFioDomainResponse,
-  RejectFundsResponse,
-  RenewFioAddressResponse,
-  RenewFioDomainResponse,
-  RequestFundsResponse,
   SentFioRequestResponse,
-  SetFioDomainVisibilityResponse,
-  TransferTokensResponse,
-  GetObtDataResponse, CancelledFioRequestResponse, FioAddressesResponse,
+  GetObtDataResponse,
+  FioAddressesResponse,
 } from './entities/responses'
 import { EndPoint } from './entities/EndPoint'
-import { PublicAddress } from './entities/PublicAddress'
 import * as queries from './transactions/queries'
 import * as SignedTransactions from './transactions/signed'
 import { SignedTransaction } from './transactions/signed/SignedTransaction'
-import { MockRegisterFioName } from './transactions/signed/MockRegisterFioName'
 import { Transactions } from './transactions/Transactions'
 import { Constants } from './utils/constants'
 import { validate, allRules } from './utils/validation'
@@ -203,13 +186,13 @@ export class FIOSDK {
   public static amountToSUF(amount: number): number {
 
     // get integer part
-    var floor = Math.floor(amount)
-    var tempResult = floor * this.SUFUnit
+    const floor = Math.floor(amount)
+    const tempResult = floor * this.SUFUnit
 
     // get remainder
-    var remainder = (amount % 1)
-    var remainderResult = remainder * (this.SUFUnit)
-    var floorRemainder = Math.floor(remainderResult)
+    const remainder = (amount % 1)
+    const remainderResult = remainder * (this.SUFUnit)
+    const floorRemainder = Math.floor(remainderResult)
 
     // add integer and remainder
     return tempResult + floorRemainder
@@ -326,6 +309,14 @@ export class FIOSDK {
   }
 
   /**
+   * @ignore
+   */
+  private getAbi(accountName: string): Promise<AbiResponse> {
+    const abi = new queries.GetAbi(accountName)
+    return abi.execute(this.publicKey)
+  }
+
+  /**
    * Execute prepared transaction.
    *
    * @param endPoint endpoint.
@@ -340,410 +331,6 @@ export class FIOSDK {
   }
 
   /**
-   * Registers a FIO Address on the FIO blockchain. The owner will be the public key associated with the FIO SDK instance.
-   *
-   * @param fioAddress FIO Address to register.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by @ [getFee] for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public registerFioAddress(
-    fioAddress: string,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<RegisterFioAddressResponse> {
-    const registerFioAddress = new SignedTransactions.RegisterFioAddress(
-      fioAddress,
-      null,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return registerFioAddress.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   * Registers a Fio Address on behalf of the owner FIO Public key parameter. Owner FIO Public key owns the FIO address
-   *
-   * @param fioAddress FIO Address to register.
-   * @param ownerPublicKey Owner FIO Public Key.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by @ [getFee] for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public registerOwnerFioAddress(
-    fioAddress: string,
-    ownerPublicKey: string,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<RegisterFioAddressResponse> {
-    const registerFioAddress = new SignedTransactions.RegisterFioAddress(
-      fioAddress,
-      ownerPublicKey,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return registerFioAddress.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   * Registers a FIO Domain on the FIO blockchain.
-   *
-   * @param fioDomain FIO Domain to register. The owner will be the public key associated with the FIO SDK instance.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by @ [getFee] for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public registerFioDomain(
-    fioDomain: string,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<RegisterFioDomainResponse> {
-    const registerFioDomain = new SignedTransactions.RegisterFioDomain(
-      fioDomain,
-      null,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return registerFioDomain.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   * Registers a FIO Domain on behalf of the owner FIO Public key parameter. Owner FIO Public key owns the FIO domain.
-   *
-   * @param fioDomain FIO Domain to register. The owner will be the public key associated with the FIO SDK instance.
-   * @param ownerPublicKey Owner FIO Public Key.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by @ [getFee] for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public registerOwnerFioDomain(
-    fioDomain: string,
-    ownerPublicKey: string,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<RegisterFioDomainResponse> {
-    const registerFioDomain = new SignedTransactions.RegisterFioDomain(
-      fioDomain,
-      ownerPublicKey,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return registerFioDomain.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-    /**
-     * Burns a FIO Address on the FIO blockchain.
-     *
-     * @param fioAddress FIO Address to burn. The owner will be the public key associated with the FIO SDK instance.
-     * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by @ [getFee] for correct value.
-     * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-     */
-    public burnFioAddress(
-        fioAddress: string,
-        maxFee: number,
-        technologyProviderId: string | null = null,
-    ): Promise<BurnFioAddressResponse> {
-        const burnFioAddress = new SignedTransactions.BurnFioAddress(
-            fioAddress,
-            maxFee,
-            this.getTechnologyProviderId(technologyProviderId),
-        )
-        return burnFioAddress.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-    }
-
-  /**
-   * Transfers a FIO Domain on the FIO blockchain.
-   *
-   * @param fioDomain FIO Domain to transfer. The owner will be the public key associated with the FIO SDK instance.
-   * @param newOwnerKey FIO Public Key of the new owner.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by @ [getFee] for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public transferFioDomain(
-      fioDomain: string,
-      newOwnerKey: string,
-      maxFee: number,
-      technologyProviderId: string | null = null,
-  ): Promise<TransferFioDomainResponse> {
-    const transferFioDomain = new SignedTransactions.TransferFioDomain(
-        fioDomain,
-        newOwnerKey,
-        maxFee,
-        this.getTechnologyProviderId(technologyProviderId),
-    )
-    return transferFioDomain.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   * Transfers a FIO Address on the FIO blockchain.
-   *
-   * @param fioAddress FIO Address to transfer. The owner will be the public key associated with the FIO SDK instance.
-   * @param newOwnerKey FIO Public Key of the new owner.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by @ [getFee] for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public transferFioAddress(
-      fioAddress: string,
-      newOwnerKey: string,
-      maxFee: number,
-      technologyProviderId: string | null = null,
-  ): Promise<TransferFioAddressResponse> {
-    const transferFioAddress = new SignedTransactions.TransferFioAddress(
-        fioAddress,
-        newOwnerKey,
-        maxFee,
-        this.getTechnologyProviderId(technologyProviderId),
-    )
-    return transferFioAddress.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   * Renew a FIO Address on the FIO blockchain.
-   *
-   * @param fioAddress FIO Address to renew.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by @ [getFee] for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public renewFioAddress(
-    fioAddress: string,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<RenewFioAddressResponse> {
-    const renewFioAddress = new SignedTransactions.RenewFioAddress(
-      fioAddress,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return renewFioAddress.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   * Renew a FIO Domain on the FIO blockchain.
-   *
-   * @param fioDomain FIO Domain to renew.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by @ [getFee] for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public renewFioDomain(
-    fioDomain: string,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<RenewFioDomainResponse> {
-    const renewFioDomain = new SignedTransactions.RenewFioDomain(
-      fioDomain,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return renewFioDomain.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   * This call allows a public address of the specific blockchain type to be added to the FIO Address.
-   *
-   * @param fioAddress FIO Address which will be mapped to public address.
-   * @param chainCode Blockchain code for blockchain hosting this token.
-   * @param tokenCode Token code to be used with that public address.
-   * @param publicAddress The public address to be added to the FIO Address for the specified token.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by /get_fee for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public addPublicAddress(
-    fioAddress: string,
-    chainCode: string,
-    tokenCode: string,
-    publicAddress: string,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<AddPublicAddressResponse> {
-    const addPublicAddress = new SignedTransactions.AddPublicAddress(
-      fioAddress,
-      [{
-        chain_code: chainCode,
-        token_code: tokenCode,
-        public_address: publicAddress
-      }],
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return addPublicAddress.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   * This call cancels the specified fio funds request..
-   *
-   * @param fioRequestID The id of the request.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by /get_fee for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public cancelFundsRequest(
-      fioRequestId: number,
-      maxFee: number,
-      technologyProviderId: string | null = null,
-  ): Promise<CancelFundsRequestResponse> {
-    const cancelFundsRequest = new SignedTransactions.CancelFundsRequest(
-        fioRequestId,
-        maxFee,
-        this.getTechnologyProviderId(technologyProviderId),
-    )
-    return cancelFundsRequest.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-
-  /**
-   * This call allows a any number of public addresses matching the blockchain code, the token code and the public address to be removed from the FIO Address.
-   *
-   * @param fioAddress FIO Address which will be mapped to public address.
-   * @param publicAddresses a list of publicAddresses, each containing chain_code, token_code, and public_address.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by /get_fee for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public removePublicAddresses(
-    fioAddress: string,
-    publicAddresses: PublicAddress[],
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<RemovePublicAddressesResponse> {
-    const removePublicAddresses = new SignedTransactions.RemovePublicAddresses(
-      fioAddress,
-      publicAddresses,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return removePublicAddresses.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-
-  /**
-   * This call allows a user to remove all addresses from the specified FIO Address, all addresses except the FIO address will be removed.
-   *
-   * @param fioAddress FIO Address which will be mapped to public address.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by /get_fee for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public removeAllPublicAddresses(
-      fioAddress: string,
-      maxFee: number,
-      technologyProviderId: string | null = null,
-  ): Promise<RemoveAllPublicAddressesResponse> {
-    const removeAllPublicAddresses = new SignedTransactions.RemoveAllPublicAddresses(
-        fioAddress,
-        maxFee,
-        this.getTechnologyProviderId(technologyProviderId),
-    )
-    return removeAllPublicAddresses.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-
-  /**
-   * This call allows a public addresses of the specific blockchain type to be added to the FIO Address.
-   *
-   * @param fioAddress FIO Address which will be mapped to public addresses.
-   * @param publicAddresses Array of public addresses to be added to the FIO Address for the specified token.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by /get_fee for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public addPublicAddresses(
-    fioAddress: string,
-    publicAddresses: PublicAddress[],
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<AddPublicAddressResponse> {
-    const addPublicAddress = new SignedTransactions.AddPublicAddress(
-      fioAddress,
-      publicAddresses,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return addPublicAddress.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   * By default all FIO Domains are non-public, meaning only the owner can register FIO Addresses on that domain. Setting them to public allows anyone to register a FIO Address on that domain.
-   *
-   * @param fioDomain FIO Domain to change visibility.
-   * @param isPublic 1 - allows anyone to register FIO Address, 0 - only owner of domain can register FIO Address.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by /get_fee for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public setFioDomainVisibility(
-    fioDomain: string,
-    isPublic: boolean,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<SetFioDomainVisibilityResponse> {
-    const SetFioDomainVisibility = new SignedTransactions.SetFioDomainVisibility(
-      fioDomain,
-      isPublic,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return SetFioDomainVisibility.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   *
-   * Records information on the FIO blockchain about a transaction that occurred on other blockchain, i.e. 1 BTC was sent on Bitcoin Blockchain, and both
-   * sender and receiver have FIO Addresses. OBT stands for Other Blockchain Transaction
-   *
-   * @param fioRequestId ID of funds request, if this Record Send transaction is in response to a previously received funds request.  Send empty if no FIO Request ID
-   * @param payerFioAddress FIO Address of the payer. This address initiated payment.
-   * @param payeeFioAddress FIO Address of the payee. This address is receiving payment.
-   * @param payerTokenPublicAddress Public address on other blockchain of user sending funds.
-   * @param payeeTokenPublicAddress Public address on other blockchain of user receiving funds.
-   * @param amount Amount sent.
-   * @param chainCode Blockchain code for blockchain hosting this token.
-   * @param tokenCode Code of the token represented in Amount requested, i.e. BTC.
-   * @param status Status of this OBT. Allowed statuses are: sent_to_blockchain.
-   * @param obtId Other Blockchain Transaction ID (OBT ID), i.e Bitcoin transaction ID.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by /get_fee for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   * @param payeeFioPublicKey Public address on other blockchain of user receiving funds.
-   * @param memo
-   * @param hash
-   * @param offlineUrl
-   */
-  public async recordObtData(
-    fioRequestId: number | null,
-    payerFioAddress: string,
-    payeeFioAddress: string,
-    payerTokenPublicAddress: string,
-    payeeTokenPublicAddress: string,
-    amount: number,
-    chainCode: string,
-    tokenCode: string,
-    status: string,
-    obtId: string,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-    payeeFioPublicKey: string | null = null,
-    memo: string | null = null,
-    hash: string | null = null,
-    offLineUrl: string | null = null,
-  ): Promise<RecordObtDataResponse> {
-    let payeeKey: any = { public_address: '' }
-    if (!payeeFioPublicKey && typeof payeeFioPublicKey !== 'string') {
-      payeeKey = await this.getFioPublicAddress(payeeFioAddress)
-    } else {
-      payeeKey.public_address = payeeFioPublicKey
-    }
-    const recordObtData = new SignedTransactions.RecordObtData(
-      fioRequestId,
-      payerFioAddress,
-      payeeFioAddress,
-      payerTokenPublicAddress,
-      payeeTokenPublicAddress,
-      amount,
-      chainCode,
-      tokenCode,
-      obtId,
-      maxFee,
-      status,
-      this.getTechnologyProviderId(technologyProviderId),
-      payeeKey.public_address,
-      memo,
-      hash,
-      offLineUrl,
-    )
-    return recordObtData.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
    * Retrives OBT metadata data stored using record send.
    *
    * @param limit Number of request to return. If omitted, all requests will be returned.
@@ -753,79 +340,6 @@ export class FIOSDK {
   public getObtData(limit?: number, offset?: number, tokenCode?: string): Promise<GetObtDataResponse> {
     const getObtDataRequest = new queries.GetObtData(this.publicKey, limit, offset, tokenCode)
     return getObtDataRequest.execute(this.publicKey, this.privateKey)
-  }
-
-  /**
-   * Reject funds request.
-   *
-   * @param fioRequestId Existing funds request Id
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by [getFee] for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public rejectFundsRequest(
-    fioRequestId: number,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<RejectFundsResponse> {
-    const rejectFundsRequest = new SignedTransactions.RejectFundsRequest(
-      fioRequestId,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return rejectFundsRequest.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
-  }
-
-  /**
-   * Create a new funds request on the FIO chain.
-   *
-   * @param payerFioAddress FIO Address of the payer. This address will receive the request and will initiate payment.
-   * @param payeeFioAddress FIO Address of the payee. This address is sending the request and will receive payment.
-   * @param payeeTokenPublicAddress Payee's public address where they want funds sent.
-   * @param amount Amount requested.
-   * @param chainCode Blockchain code for blockchain hosting this token.
-   * @param tokenCode Code of the token represented in amount requested.
-   * @param memo
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by [getFee] for correct value.
-   * @param payerFioPublicKey Public address on other blockchain of user sending funds.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   * @param hash
-   * @param offlineUrl
-   */
-  public async requestFunds(
-    payerFioAddress: string,
-    payeeFioAddress: string,
-    payeeTokenPublicAddress: string,
-    amount: number,
-    chainCode: string,
-    tokenCode: string,
-    memo: string,
-    maxFee: number,
-    payerFioPublicKey: string | null = null,
-    technologyProviderId: string | null = null,
-    hash?: string,
-    offlineUrl?: string,
-  ): Promise<RequestFundsResponse> {
-    let payerKey: any = { public_address: '' }
-    if (!payerFioPublicKey && typeof payerFioPublicKey !== 'string') {
-      payerKey = await this.getFioPublicAddress(payerFioAddress)
-    } else {
-      payerKey.public_address = payerFioPublicKey
-    }
-    const requestNewFunds = new SignedTransactions.RequestNewFunds(
-      payerFioAddress,
-      payerKey.public_address,
-      payeeFioAddress,
-      this.getTechnologyProviderId(technologyProviderId),
-      maxFee,
-      payeeTokenPublicAddress,
-      amount,
-      chainCode,
-      tokenCode,
-      memo,
-      hash,
-      offlineUrl,
-    )
-    return requestNewFunds.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
   }
 
   /**
@@ -910,7 +424,7 @@ export class FIOSDK {
    * @param limit Number of request to return. If omitted, all requests will be returned.
    * @param offset First request from list to return. If omitted, 0 is assumed.
    */
-  public getCancelledFioRequests(limit?: number, offset?: number): Promise<CancelledFioRequestResponse> {
+  public getCancelledFioRequests(limit?: number, offset?: number): Promise<any> {
     const cancelledFioRequest = new queries.CancelledFioRequests(this.publicKey, limit, offset)
     return cancelledFioRequest.execute(this.publicKey, this.privateKey)
   }
@@ -942,31 +456,6 @@ export class FIOSDK {
    */
   public getFioPublicAddress(fioAddress: string): Promise<PublicAddressResponse> {
     return this.getPublicAddress(fioAddress, 'FIO', 'FIO')
-  }
-
-  /**
-   *
-   * Transfers FIO tokens from public key associated with the FIO SDK instance to
-   * the payeePublicKey.
-   *
-   * @param payeeFioPublicKey FIO public Address of the one receiving the tokens.
-   * @param amount Amount sent in SUFs.
-   * @param maxFee Maximum amount of SUFs the user is willing to pay for fee. Should be preceded by /get_fee for correct value.
-   * @param technologyProviderId FIO Address of the wallet which generates this transaction.
-   */
-  public transferTokens(
-    payeeFioPublicKey: string,
-    amount: number,
-    maxFee: number,
-    technologyProviderId: string | null = null,
-  ): Promise<TransferTokensResponse> {
-    const transferTokens = new SignedTransactions.TransferTokens(
-      payeeFioPublicKey,
-      amount,
-      maxFee,
-      this.getTechnologyProviderId(technologyProviderId),
-    )
-    return transferTokens.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
   }
 
   /**
@@ -1083,7 +572,7 @@ export class FIOSDK {
    */
   public registerFioNameOnBehalfOfUser(fioName: string, publicKey: string) {
     const server = this.registerMockUrl // "mock.dapix.io/mockd/DEV2"
-    const mockRegisterFioName = new MockRegisterFioName(
+    const mockRegisterFioName = new SignedTransactions.MockRegisterFioName(
       fioName,
       publicKey,
       server,
@@ -1101,11 +590,11 @@ export class FIOSDK {
   /**
    * Allows advance user to send their own content directly to FIO contracts
    *
-   * @param account Account name
    * @param action Name of action
    * @param data JSON object with params for action
+   * @param account Account name
    */
-  public pushTransaction(account: string, action: string, data: any): Promise<any> {
+  public pushTransaction(action: string, data: any, account: string = ''): Promise<any> {
     data.tpid = this.getTechnologyProviderId(data.tpid)
     const pushTransaction = new SignedTransactions.PushTransaction(
       action,
@@ -1115,227 +604,34 @@ export class FIOSDK {
     return pushTransaction.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
   }
 
-  /**
-   * @ignore
-   */
-  public genericAction(action: string, params: any): any {
-    switch (action) {
-      case 'getFioPublicKey':
-        return this.getFioPublicKey()
-      case 'registerFioAddress':
-        if (params.ownerPublicKey) {
-          return this.registerOwnerFioAddress(
-            params.fioAddress,
-            params.ownerPublicKey,
-            params.maxFee,
-            params.technologyProviderId,
-          )
-        } else {
-          return this.registerFioAddress(
-            params.fioAddress,
-            params.maxFee,
-            params.technologyProviderId,
-          )
-        }
-      case 'registerOwnerFioAddress':
-        return this.registerOwnerFioAddress(
-          params.fioAddress,
-          params.ownerPublicKey,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'registerFioDomain':
-        return this.registerFioDomain(
-          params.fioDomain,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'registerOwnerFioDomain':
-        return this.registerOwnerFioDomain(
-          params.fioDomain,
-          params.ownerPublicKey,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'renewFioDomain':
-        return this.renewFioDomain(
-          params.fioDomain,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'renewFioAddress':
-        return this.renewFioAddress(
-          params.fioAddress,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'burnFioAddress':
-        return this.burnFioAddress(
-          params.fioAddress,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'transferFioAddress':
-        return this.transferFioAddress(
-            params.fioAddress,
-            params.newOwnerKey,
-            params.maxFee,
-            params.technologyProviderId,
-        )
-      case 'transferFioDomain':
-        return this.transferFioDomain(
-            params.fioDomain,
-            params.newOwnerKey,
-            params.maxFee,
-            params.technologyProviderId,
-        )
-      case 'addPublicAddress':
-        return this.addPublicAddress(
-          params.fioAddress,
-          params.chainCode,
-          params.tokenCode,
-          params.publicAddress,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'addPublicAddresses':
-        return this.addPublicAddresses(
-          params.fioAddress,
-          params.publicAddresses,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'removePublicAddresses':
-        return this.removePublicAddresses(
-          params.fioAddress,
-          params.publicAddresses,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'cancelFundsRequest':
-        return this.cancelFundsRequest(
-            params.fioRequestId,
-            params.maxFee,
-            params.technologyProviderId,
-        )
-      case 'removeAllPublicAddresses':
-        return this.removeAllPublicAddresses(
-            params.fioAddress,
-            params.maxFee,
-            params.technologyProviderId,
-        )
-      case 'setFioDomainVisibility':
-        return this.setFioDomainVisibility(
-          params.fioDomain,
-          params.isPublic,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'recordObtData':
-        return this.recordObtData(
-          params.fioRequestId || null,
-          params.payerFioAddress,
-          params.payeeFioAddress,
-          params.payerTokenPublicAddress,
-          params.payeeTokenPublicAddress,
-          params.amount,
-          params.chainCode,
-          params.tokenCode,
-          params.status || '',
-          params.obtId,
-          params.maxFee,
-          params.technologyProviderId,
-          params.payeeFioPublicKey,
-          params.memo,
-          params.hash,
-          params.offLineUrl,
-        )
-      case 'getObtData':
-        return this.getObtData(params.limit, params.offset, params.tokenCode)
-      case 'rejectFundsRequest':
-        return this.rejectFundsRequest(
-          params.fioRequestId,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'requestFunds':
-        return this.requestFunds(
-          params.payerFioAddress,
-          params.payeeFioAddress,
-          params.payeeTokenPublicAddress,
-          params.amount,
-          params.chainCode,
-          params.tokenCode,
-          params.memo,
-          params.maxFee,
-          params.payerFioPublicKey,
-          params.technologyProviderId,
-          params.hash,
-          params.offlineUrl,
-        )
-      case 'isAvailable':
-        return this.isAvailable(params.fioName)
-      case 'getFioBalance':
-        if (params) {
-          return this.getFioBalance(params.fioPublicKey)
-        } else {
-          return this.getFioBalance()
-        }
-      case 'getFioNames':
-        return this.getFioNames(params.fioPublicKey)
-        case 'getFioDomains':
-            return this.getFioDomains(params.fioPublicKey, params.limit, params.offset)
-        case 'getFioAddresses':
-            return this.getFioAddresses(params.fioPublicKey, params.limit, params.offset)
-      case 'getPendingFioRequests':
-        return this.getPendingFioRequests(params.limit, params.offset)
-      case 'getCancelledFioRequests':
-        return this.getCancelledFioRequests(params.limit, params.offset)
-      case 'getSentFioRequests':
-        return this.getSentFioRequests(params.limit, params.offset)
-      case 'getPublicAddress':
-        return this.getPublicAddress(params.fioAddress, params.chainCode, params.tokenCode)
-      case 'transferTokens':
-        return this.transferTokens(
-          params.payeeFioPublicKey,
-          params.amount,
-          params.maxFee,
-          params.technologyProviderId,
-        )
-      case 'getFee':
-        return this.getFee(params.endPoint, params.fioAddress)
-      case 'getFeeForRecordObtData':
-        return this.getFeeForRecordObtData(params.payerFioAddress)
-      case 'getFeeForNewFundsRequest':
-        return this.getFeeForNewFundsRequest(params.payeeFioAddress)
-      case 'getFeeForRejectFundsRequest':
-        return this.getFeeForRejectFundsRequest(params.payerFioAddress)
-      case 'getFeeForBurnFioAddress':
-        return this.getFeeForBurnFioAddress(params.fioAddress)
-      case 'getFeeForTransferFioAddress':
-        return this.getFeeForTransferFioAddress(params.fioAddress)
-      case 'getFeeForTransferFioDomain':
-        return this.getFeeForTransferFioDomain(params.fioAddress)
-      case 'getFeeForAddPublicAddress':
-        return this.getFeeForAddPublicAddress(params.fioAddress)
-      case 'getFeeForCancelFundsRequest':
-        return this.getFeeForCancelFundsRequest(params.fioAddress)
-      case 'getFeeForRemovePublicAddresses':
-        return this.getFeeForRemovePublicAddresses(params.fioAddress)
-      case 'getFeeForRemoveAllPublicAddresses':
-        return this.getFeeForRemoveAllPublicAddresses(params.fioAddress)
-      case 'getMultiplier':
-        return this.getMultiplier()
-      case 'pushTransaction':
-        return this.pushTransaction(params.account, params.action, params.data)
-    }
-  }
-
-  /**
-   * @ignore
-   */
-  private getAbi(accountName: string): Promise<AbiResponse> {
-    const abi = new queries.GetAbi(accountName)
-    return abi.execute(this.publicKey)
-  }
+  // public genericAction(action: string, params: any): any {
+  //   switch (action) {
+  //     case 'getFioPublicKey':
+  //       return this.getFioPublicKey()
+  //     case 'getObtData':
+  //       return this.getObtData(params.limit, params.offset, params.tokenCode)
+  //     case 'isAvailable':
+  //       return this.isAvailable(params.fioName)
+  //     case 'getFioBalance':
+  //       if (params) {
+  //         return this.getFioBalance(params.fioPublicKey)
+  //       } else {
+  //         return this.getFioBalance()
+  //       }
+  //     case 'getFioNames':
+  //       return this.getFioNames(params.fioPublicKey)
+  //       case 'getFioDomains':
+  //           return this.getFioDomains(params.fioPublicKey, params.limit, params.offset)
+  //       case 'getFioAddresses':
+  //           return this.getFioAddresses(params.fioPublicKey, params.limit, params.offset)
+  //     case 'getPendingFioRequests':
+  //       return this.getPendingFioRequests(params.limit, params.offset)
+  //     case 'getCancelledFioRequests':
+  //       return this.getCancelledFioRequests(params.limit, params.offset)
+  //     case 'getSentFioRequests':
+  //       return this.getSentFioRequests(params.limit, params.offset)
+  //     case 'getPublicAddress':
+  //       return this.getPublicAddress(params.fioAddress, params.chainCode, params.tokenCode)
+  //   }
+  // }
 }

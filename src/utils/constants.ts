@@ -18,17 +18,49 @@ export class Constants {
     Constants.endPoints.TransferTokensFioAddress,
   ]
 
+  public static actionNames: { [key: string]: string } = {
+    regaddress: 'regaddress',
+    renewaddress: 'renewaddress',
+    regdomain: 'regdomain',
+    renewdomain: 'renewdomain',
+    setdomainpub: 'setdomainpub',
+    xferdomain: 'xferdomain',
+    addaddress: 'addaddress',
+    remaddress: 'remaddress',
+    remalladdr: 'remalladdr',
+    newfundsreq: 'newfundsreq',
+    recordobt: 'recordobt',
+  }
+
+  public static abiAccounts: { [key: string]: string } = {
+    fio_address: 'fio.address',
+    fio_reqobt: 'fio.reqobt',
+    fio_token: 'fio.token',
+    eosio: 'eosio',
+    fio_fee: 'fio.fee',
+    eosio_msig: 'eosio.msig',
+  }
+
   public static rawAbiAccountName: string[] = [
-    'fio.address',
-    'fio.reqobt',
-    'fio.token',
-    'eosio',
-    'fio.fee',
-    'eosio.msig'
+    Constants.abiAccounts.fio_address,
+    Constants.abiAccounts.fio_reqobt,
+    Constants.abiAccounts.fio_token,
+    Constants.abiAccounts.eosio,
+    Constants.abiAccounts.fio_fee,
+    Constants.abiAccounts.eosio_msig,
   ]
 
   public static multiplier = 1000000000
 
-  public static defaultAccount: string = 'fio.address'
+  public static defaultAccount: string = Constants.abiAccounts.fio_address
+
+  public static CipherContentTypes: { [key: string]: string } = {
+    new_funds_content: 'new_funds_content',
+    record_obt_data_content: 'record_obt_data_content',
+  }
+
+  public static TrxStatuses: { [key: string]: string } = {
+    sent_to_blockchain: 'sent_to_blockchain',
+  }
 
 }
