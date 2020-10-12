@@ -592,14 +592,23 @@ export class FIOSDK {
    *
    * @param action Name of action
    * @param data JSON object with params for action
-   * @param account Account name
+   * @param options Options
+   * @param options.account Account name
+   * @param options.additionalReturnKeys Additional keys for response object from api result
    */
-  public pushTransaction(action: string, data: any, account: string = ''): Promise<any> {
+  public pushTransaction(
+    action: string,
+    data: any,
+    options: {
+      account?: string,
+      additionalReturnKeys?: { [key: string]: string[] }
+    } = {}
+  ): Promise<any> {
     data.tpid = this.getTechnologyProviderId(data.tpid)
     const pushTransaction = new SignedTransactions.PushTransaction(
       action,
-      account,
       data,
+      options
     )
     return pushTransaction.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
   }

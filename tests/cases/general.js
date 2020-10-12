@@ -1,13 +1,14 @@
 const { expect } = require('chai')
-const { FIOSDK } = require('../lib/FIOSDK')
-const { EndPoint } = require('../lib/entities/EndPoint')
-const { Constants } = require('../lib/utils/constants')
+const { FIOSDK } = require('../../lib/FIOSDK')
+const { Constants } = require('../../lib/utils/constants')
 
 const generalTests = (fioSdk, fioSdk2, {
   publicKey,
   publicKey2,
   testFioAddressName,
   testFioAddressName2,
+  ethChainCode,
+  ethTokenCode,
   generateTestingFioDomain,
   generateTestingFioAddress
 }) => {

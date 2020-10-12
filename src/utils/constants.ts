@@ -24,12 +24,17 @@ export class Constants {
     regdomain: 'regdomain',
     renewdomain: 'renewdomain',
     setdomainpub: 'setdomainpub',
+    xferaddress: 'xferaddress',
     xferdomain: 'xferdomain',
     addaddress: 'addaddress',
     remaddress: 'remaddress',
     remalladdr: 'remalladdr',
     newfundsreq: 'newfundsreq',
     recordobt: 'recordobt',
+    cancelfndreq: 'cancelfndreq',
+    rejectfndreq: 'rejectfndreq',
+    trnsfiopubky: 'trnsfiopubky',
+    burnaddress: 'burnaddress',
   }
 
   public static abiAccounts: { [key: string]: string } = {
