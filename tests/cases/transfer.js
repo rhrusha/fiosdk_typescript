@@ -4,6 +4,7 @@ const { Constants } = require('../../lib/utils/constants')
 
 const transfer = (fioSdk, fioSdk2, {
   publicKey2,
+  defaultFee,
   timeout
 }) => {
   const fundsAmount = FIOSDK.SUFUnit
@@ -11,7 +12,7 @@ const transfer = (fioSdk, fioSdk2, {
   let fioBalanceAfter = 0
 
   it(`Check balance before transfer`, async () => {
-    const result = await fioSdk2.genericAction('getFioBalance', {})
+    const result = await fioSdk2.getFioBalance()
 
     fioBalance = result.balance
   })
@@ -37,7 +38,7 @@ const transfer = (fioSdk, fioSdk2, {
 
   it(`Check balance and balance change`, async () => {
     await timeout(10000)
-    const result = await fioSdk2.genericAction('getFioBalance', {})
+    const result = await fioSdk2.getFioBalance()
     fioBalanceAfter = result.balance
     expect(fundsAmount).to.equal(fioBalanceAfter - fioBalance)
   })

@@ -9,6 +9,18 @@ export class Constants {
     RequestNewFunds: 'new_funds_request',
     TransferTokensKey: 'transfer_tokens_pub_key',
     TransferTokensFioAddress: 'transfer_tokens_fio_address',
+    AvailabilityCheck: 'avail_check',
+    CancelledFioRequests: 'get_cancelled_fio_requests',
+    GetAbi: 'get_raw_abi',
+    GetAddresses: 'get_fio_addresses',
+    GetDomains: 'get_fio_domains',
+    GetFee: 'get_fee',
+    GetFioBalance: 'get_fio_balance',
+    GetNames: 'get_fio_names',
+    GetObtData: 'get_obt_data',
+    GetPublicAddress: 'get_pub_address',
+    PendingFioRequests: 'get_pending_fio_requests',
+    SentFioRequests: 'get_sent_fio_requests',
   }
 
   public static feeNoAddressOperation: string[] = [

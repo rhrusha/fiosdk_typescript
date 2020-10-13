@@ -1,14 +1,14 @@
 const { expect } = require('chai')
 const { SignedTransaction } = require('../../lib/transactions/signed/SignedTransaction')
+const { EndPoint } = require('../../lib/entities/EndPoint')
 const { Constants } = require('../../lib/utils/constants')
 
 const fioRequest = (fioSdk, fioSdk2, {
-  publicKey,
-  publicKey2,
   testFioAddressName,
   testFioAddressName2,
   fioChainCode,
   fioTokenCode,
+  defaultFee,
   timeout
 }) => {
   const fundsAmount = 3
@@ -16,9 +16,7 @@ const fioRequest = (fioSdk, fioSdk2, {
   const memo = 'testing fund request'
 
   it(`getFee for requestFunds`, async () => {
-    const result = await fioSdk.genericAction('getFeeForNewFundsRequest', {
-      payeeFioAddress: testFioAddressName2
-    })
+    const result = await fioSdk.getFee(EndPoint.newFundsRequest, testFioAddressName2)
 
     expect(result).to.have.all.keys('fee')
     expect(result.fee).to.be.a('number')
@@ -26,8 +24,8 @@ const fioRequest = (fioSdk, fioSdk2, {
 
   it(`requestFunds`, async () => {
     const content = {
-      payer_fio_public_key: publicKey,
-      payee_public_address: publicKey2,
+      payer_fio_public_key: fioSdk.publicKey,
+      payee_public_address: fioSdk2.publicKey,
       amount: `${fundsAmount}`,
       chain_code: fioChainCode,
       token_code: fioTokenCode,
@@ -40,7 +38,7 @@ const fioRequest = (fioSdk, fioSdk2, {
       payer_fio_address: testFioAddressName,
       payee_fio_address: testFioAddressName2,
       max_fee: defaultFee,
-      content: trx.getCipherContent(Constants.CipherContentTypes.new_funds_content, content, fioSdk2.privateKey, publicKey)
+      content: trx.getCipherContent(Constants.CipherContentTypes.new_funds_content, content, fioSdk2.privateKey, fioSdk.publicKey)
     })
     requestId = result.fio_request_id
     expect(result).to.have.all.keys('fio_request_id', 'status', 'fee_collected')
@@ -51,7 +49,14 @@ const fioRequest = (fioSdk, fioSdk2, {
 
   it(`getPendingFioRequests`, async () => {
     await timeout(4000)
-    const result = await fioSdk.genericAction('getPendingFioRequests', {})
+    const result = await fioSdk.get(EndPoint.pendingFioRequests, {
+      fio_public_key: fioSdk.publicKey
+    }, {
+      decrypt: {
+        key: 'requests',
+        contentType: Constants.CipherContentTypes.new_funds_content
+      }
+    })
     expect(result).to.have.all.keys('requests', 'more')
     expect(result.requests).to.be.a('array')
     expect(result.more).to.be.a('number')
@@ -67,8 +72,8 @@ const fioRequest = (fioSdk, fioSdk2, {
 
   it(`recordObtData`, async () => {
     const content = {
-      payer_public_address: publicKey,
-      payee_public_address: publicKey2,
+      payer_public_address: fioSdk.publicKey,
+      payee_public_address: fioSdk2.publicKey,
       amount: `${fundsAmount}`,
       chain_code: fioChainCode,
       token_code: fioTokenCode,
@@ -82,7 +87,7 @@ const fioRequest = (fioSdk, fioSdk2, {
     const result = await fioSdk.pushTransaction(Constants.actionNames.recordobt, {
       payer_fio_address: testFioAddressName,
       payee_fio_address: testFioAddressName2,
-      content: trx.getCipherContent(Constants.CipherContentTypes.record_obt_data_content, content, fioSdk.privateKey, publicKey2),
+      content: trx.getCipherContent(Constants.CipherContentTypes.record_obt_data_content, content, fioSdk.privateKey, fioSdk2.publicKey),
       fio_request_id: requestId,
       max_fee: defaultFee,
     })
@@ -92,7 +97,14 @@ const fioRequest = (fioSdk, fioSdk2, {
   })
 
   it(`getSentFioRequests`, async () => {
-    const result = await fioSdk2.genericAction('getSentFioRequests', {})
+    const result = await fioSdk2.get(EndPoint.sentFioRequests, {
+      fio_public_key: fioSdk2.publicKey
+    }, {
+      decrypt: {
+        key: 'requests',
+        contentType: Constants.CipherContentTypes.new_funds_content
+      }
+    })
     expect(result).to.have.all.keys('requests', 'more')
     expect(result.requests).to.be.a('array')
     expect(result.more).to.be.a('number')
@@ -108,7 +120,16 @@ const fioRequest = (fioSdk, fioSdk2, {
 
   it(`Payer getObtData`, async () => {
     await timeout(10000)
-    const result = await fioSdk.genericAction('getObtData', {})
+    const result = await fioSdk.get(
+      EndPoint.getObtData, {
+        fio_public_key: fioSdk.publicKey
+      }, {
+        decrypt: {
+          key: 'obt_data_records',
+          contentType: Constants.CipherContentTypes.record_obt_data_content
+        }
+      }
+    )
     expect(result).to.have.all.keys('obt_data_records', 'more')
     expect(result.obt_data_records).to.be.a('array')
     expect(result.more).to.be.a('number')
@@ -123,7 +144,16 @@ const fioRequest = (fioSdk, fioSdk2, {
   })
 
   it(`Payee getObtData`, async () => {
-    const result = await fioSdk2.genericAction('getObtData', {})
+    const result = await fioSdk2.get(
+      EndPoint.getObtData, {
+        fio_public_key: fioSdk2.publicKey
+      }, {
+        decrypt: {
+          key: 'obt_data_records',
+          contentType: Constants.CipherContentTypes.record_obt_data_content
+        }
+      }
+    )
     expect(result).to.have.all.keys('obt_data_records', 'more')
     expect(result.obt_data_records).to.be.a('array')
     expect(result.more).to.be.a('number')

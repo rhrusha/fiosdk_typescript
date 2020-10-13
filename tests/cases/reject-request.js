@@ -1,4 +1,5 @@
 const { expect } = require('chai')
+const { EndPoint } = require('../../lib/entities/EndPoint')
 const { SignedTransaction } = require('../../lib/transactions/signed/SignedTransaction')
 const { Constants } = require('../../lib/utils/constants')
 
@@ -9,6 +10,7 @@ const rejectRequest = (fioSdk, fioSdk2, {
   testFioAddressName2,
   fioChainCode,
   fioTokenCode,
+  defaultFee,
   timeout
 }) => {
   const fundsAmount = 4
@@ -43,7 +45,14 @@ const rejectRequest = (fioSdk, fioSdk2, {
 
   it(`getPendingFioRequests`, async () => {
     await timeout(4000)
-    const result = await fioSdk.genericAction('getPendingFioRequests', {})
+    const result = await fioSdk.get(EndPoint.pendingFioRequests, {
+      fio_public_key: fioSdk.publicKey
+    }, {
+      decrypt: {
+        key: 'requests',
+        contentType: Constants.CipherContentTypes.new_funds_content
+      }
+    })
 
     expect(result).to.have.all.keys('requests', 'more')
     expect(result.requests).to.be.a('array')
@@ -59,9 +68,7 @@ const rejectRequest = (fioSdk, fioSdk2, {
   })
 
   it(`getFee for rejectFundsRequest`, async () => {
-    const result = await fioSdk.genericAction('getFeeForRejectFundsRequest', {
-      payerFioAddress: testFioAddressName2
-    })
+    const result = await fioSdk.getFee('getFeeForRejectFundsRequest', testFioAddressName2) // payerFioAddress
 
     expect(result).to.have.all.keys('fee')
     expect(result.fee).to.be.a('number')

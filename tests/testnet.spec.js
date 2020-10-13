@@ -60,12 +60,11 @@ const timeout = async (ms) => {
 }
 
 const defaultTestParams = {
-  publicKey,
-  publicKey2,
   testFioAddressName,
   testFioAddressName2,
   fioChainCode,
   fioTokenCode,
+  defaultFee,
   timeout
 }
 
@@ -86,9 +85,7 @@ before(async () => {
   )
 
   try {
-    const isAvailableResult = await fioSdk.genericAction('isAvailable', {
-      fioName: testFioAddressName
-    })
+    const isAvailableResult = await fioSdk.isAvailable(testFioAddressName)
     if (!isAvailableResult.is_registered) {
       await fioSdk.pushTransaction(
         Constants.actionNames.regaddress,
@@ -103,9 +100,7 @@ before(async () => {
     console.log(e);
   }
   try {
-    const isAvailableResult2 = await fioSdk2.genericAction('isAvailable', {
-      fioName: testFioAddressName2
-    })
+    const isAvailableResult2 = await fioSdk2.isAvailable(testFioAddressName2)
     if (!isAvailableResult2.is_registered) {
       await fioSdk2.pushTransaction(
         Constants.actionNames.regaddress,

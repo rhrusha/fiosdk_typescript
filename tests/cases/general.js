@@ -1,14 +1,18 @@
+import {EndPoint} from "../../src/entities/EndPoint";
+
 const { expect } = require('chai')
 const { FIOSDK } = require('../../lib/FIOSDK')
 const { Constants } = require('../../lib/utils/constants')
 
+const actionNames = Constants.actionNames
 const generalTests = (fioSdk, fioSdk2, {
-  publicKey,
-  publicKey2,
   testFioAddressName,
   testFioAddressName2,
   ethChainCode,
   ethTokenCode,
+  fioChainCode,
+  fioTokenCode,
+  defaultFee,
   generateTestingFioDomain,
   generateTestingFioAddress
 }) => {
@@ -120,30 +124,30 @@ const generalTests = (fioSdk, fioSdk2, {
     const fioDomainIsValid = FIOSDK.isFioDomainValid(newFioDomain)
     expect(fioDomainIsValid).to.equal(true)
 
-    const privateKeyIsValid = FIOSDK.isFioPublicKeyValid(publicKey)
+    const privateKeyIsValid = FIOSDK.isFioPublicKeyValid(fioSdk.publicKey)
     expect(privateKeyIsValid).to.equal(true)
 
-    const publicKeyIsValid = FIOSDK.isPublicAddressValid(publicKey)
+    const publicKeyIsValid = FIOSDK.isPublicAddressValid(fioSdk.publicKey)
     expect(publicKeyIsValid).to.equal(true)
   })
 
   it(`Getting fio public key`, async () => {
-    const result = await fioSdk.genericAction('getFioPublicKey', {})
+    const result = await fioSdk.getFioPublicKey()
 
-    expect(result).to.equal(publicKey)
+    expect(result).to.equal(fioSdk.publicKey)
   })
 
   it(`getFioBalance`, async () => {
-    const result = await fioSdk.genericAction('getFioBalance', {})
+    const result = await fioSdk.getFioBalance()
 
     expect(result).to.have.all.keys('balance')
     expect(result.balance).to.be.a('number')
   })
 
   it(`Register fio domain`, async () => {
-    const result = await fioSdk.pushTransaction(Constants.actionNames.regdomain, {
+    const result = await fioSdk.pushTransaction(actionNames.regdomain, {
       fio_domain: newFioDomain,
-      owner_fio_public_key: publicKey,
+      owner_fio_public_key: fioSdk.publicKey,
       max_fee: defaultFee
     })
 
@@ -154,7 +158,7 @@ const generalTests = (fioSdk, fioSdk2, {
   })
 
   it(`Renew fio domain`, async () => {
-    const result = await fioSdk.pushTransaction(Constants.actionNames.renewdomain, {
+    const result = await fioSdk.pushTransaction(actionNames.renewdomain, {
       fio_domain: newFioDomain,
       max_fee: defaultFee,
     })
@@ -166,7 +170,7 @@ const generalTests = (fioSdk, fioSdk2, {
   })
 
   it(`setFioDomainVisibility true`, async () => {
-    const result = await fioSdk.pushTransaction(Constants.actionNames.setdomainpub, {
+    const result = await fioSdk.pushTransaction(actionNames.setdomainpub, {
       fio_domain: newFioDomain,
       is_public: 1,
       max_fee: defaultFee,
@@ -180,10 +184,10 @@ const generalTests = (fioSdk, fioSdk2, {
 
   it(`Register fio address`, async () => {
     const result = await fioSdk.pushTransaction(
-      Constants.actionNames.regaddress,
+      actionNames.regaddress,
       {
         fio_address: newFioAddress,
-        owner_fio_public_key: publicKey,
+        owner_fio_public_key: fioSdk.publicKey,
         max_fee: defaultFee
       }
     )
@@ -195,7 +199,7 @@ const generalTests = (fioSdk, fioSdk2, {
   })
 
   it(`getFioNames`, async () => {
-    const result = await fioSdk.genericAction('getFioNames', { fioPublicKey: publicKey })
+    const result = await fioSdk.getFioNames(fioSdk.publicKey)
 
     expect(result).to.have.all.keys('fio_domains', 'fio_addresses')
     expect(result.fio_domains).to.be.a('array')
@@ -204,7 +208,7 @@ const generalTests = (fioSdk, fioSdk2, {
 
   it(`getFioDomains`, async () => {
     try{
-      const result = await fioSdk.genericAction('getFioDomains', { fioPublicKey: fioSdk.publicKey })
+      const result = await fioSdk.get(EndPoint.getDomains, { fio_public_key: fioSdk.publicKey })
 
       expect(result).to.have.all.keys('fio_domains','more')
       expect(result.fio_domains).to.be.a('array')
@@ -217,10 +221,10 @@ const generalTests = (fioSdk, fioSdk2, {
     const newFioAddress2 = generateTestingFioAddress(newFioDomain)
 
     const result = await fioSdk.pushTransaction(
-      Constants.actionNames.regaddress,
+      actionNames.regaddress,
       {
         fio_address: newFioAddress2,
-        owner_fio_public_key: publicKey2,
+        owner_fio_public_key: fioSdk2.publicKey,
         max_fee: defaultFee
       }
     )
@@ -231,7 +235,7 @@ const generalTests = (fioSdk, fioSdk2, {
   })
 
   it(`setFioDomainVisibility false`, async () => {
-    const result = await fioSdk.pushTransaction(Constants.actionNames.setdomainpub, {
+    const result = await fioSdk.pushTransaction(actionNames.setdomainpub, {
       fio_domain: newFioDomain,
       is_public: 0,
       max_fee: defaultFee,
@@ -244,7 +248,7 @@ const generalTests = (fioSdk, fioSdk2, {
   })
 
   it(`setFioDomainVisibility true`, async () => {
-    const result = await fioSdk.pushTransaction(Constants.actionNames.setdomainpub, {
+    const result = await fioSdk.pushTransaction(actionNames.setdomainpub, {
       fio_domain: newFioDomain,
       is_public: 1,
       max_fee: defaultFee,
@@ -257,16 +261,14 @@ const generalTests = (fioSdk, fioSdk2, {
   })
 
   it(`getFee for transferFioDomain`, async () => {
-    const result = await fioSdk.genericAction('getFeeForTransferFioDomain', {
-      fioAddress: newFioAddress
-    })
+    const result = await fioSdk.getFee(EndPoint.transferFioDomain, newFioAddress)
 
     expect(result).to.have.all.keys('fee')
     expect(result.fee).to.be.a('number')
   })
 
   it(`Transfer fio domain`, async () => {
-    const result = await fioSdk.pushTransaction(Constants.actionNames.xferdomain, {
+    const result = await fioSdk.pushTransaction(actionNames.xferdomain, {
       fio_domain: newFioDomain,
       new_owner_fio_public_key: pubKeyForTransfer,
       max_fee: defaultFee,
@@ -278,7 +280,7 @@ const generalTests = (fioSdk, fioSdk2, {
   })
 
   it(`Renew fio address`, async () => {
-    const result = await fioSdk.pushTransaction(Constants.actionNames.renewaddress, {
+    const result = await fioSdk.pushTransaction(actionNames.renewaddress, {
       fio_address: newFioAddress,
       max_fee: defaultFee,
     })
@@ -290,16 +292,14 @@ const generalTests = (fioSdk, fioSdk2, {
   })
 
   it(`getFee for addPublicAddress`, async () => {
-    const result = await fioSdk.genericAction('getFeeForAddPublicAddress', {
-      fioAddress: newFioAddress
-    })
+    const result = await fioSdk.getFee(EndPoint.addPubAddress, newFioAddress)
 
     expect(result).to.have.all.keys('fee')
     expect(result.fee).to.be.a('number')
   })
 
   it(`Add public address`, async () => {
-    const result = await fioSdk.pushTransaction(Constants.actionNames.addaddress, {
+    const result = await fioSdk.pushTransaction(actionNames.addaddress, {
       fio_address: newFioAddress,
       public_addresses: [
         {
@@ -317,7 +317,7 @@ const generalTests = (fioSdk, fioSdk2, {
   })
 
   it(`Add public addresses`, async () => {
-    const result = await fioSdk.pushTransaction(Constants.actionNames.addaddress, {
+    const result = await fioSdk.pushTransaction(actionNames.addaddress, {
       fio_address: newFioAddress,
       public_addresses: [
         {
@@ -328,7 +328,7 @@ const generalTests = (fioSdk, fioSdk2, {
         {
           chain_code: fioChainCode,
           token_code: fioTokenCode,
-          public_address: publicKey,
+          public_address: fioSdk.publicKey,
         }
       ],
       max_fee: defaultFee
@@ -339,17 +339,8 @@ const generalTests = (fioSdk, fioSdk2, {
     expect(result.fee_collected).to.be.a('number')
   })
 
-  it(`getFee for removePublicAddresses`, async () => {
-    const result = await fioSdk.genericAction('getFeeForRemovePublicAddresses', {
-      fioAddress: newFioAddress
-    })
-
-    expect(result).to.have.all.keys('fee')
-    expect(result.fee).to.be.a('number')
-  })
-
   it(`Remove public addresses`, async () => {
-    const result = await fioSdk.pushTransaction(Constants.actionNames.remaddress, {
+    const result = await fioSdk.pushTransaction(actionNames.remaddress, {
       fio_address: newFioAddress,
       public_addresses: [
         {
@@ -365,18 +356,8 @@ const generalTests = (fioSdk, fioSdk2, {
     expect(result.fee_collected).to.be.a('number')
   })
 
-  it(`getFee for removeAllPublicAddresses`, async () => {
-
-    const result = await fioSdk.genericAction('getFeeForRemoveAllPublicAddresses', {
-      fioAddress: newFioAddress
-    })
-
-    expect(result).to.have.all.keys('fee')
-    expect(result.fee).to.be.a('number')
-  })
-
   it(`Remove all public addresses`, async () => {
-    await fioSdk.pushTransaction(Constants.actionNames.addaddress, {
+    await fioSdk.pushTransaction(actionNames.addaddress, {
       fio_address: newFioAddress,
       publicAddresses: [
         {
@@ -388,7 +369,7 @@ const generalTests = (fioSdk, fioSdk2, {
       max_fee: defaultFee
     })
 
-    const result = await fioSdk.pushTransaction(Constants.actionNames.remalladdr, {
+    const result = await fioSdk.pushTransaction(actionNames.remalladdr, {
       fio_address: newFioAddress,
       max_fee: defaultFee
     })
@@ -398,34 +379,27 @@ const generalTests = (fioSdk, fioSdk2, {
   })
 
   it(`isAvailable true`, async () => {
-    const result = await fioSdk.genericAction('isAvailable', {
-      fioName: generateTestingFioAddress(),
-    })
+    const result = await fioSdk.isAvailable(generateTestingFioAddress())
 
     expect(result.is_registered).to.equal(0)
   })
 
   it(`isAvailable false`, async () => {
-    const result = await fioSdk.genericAction('isAvailable', {
-      fioName: testFioAddressName
-    })
+    const result = await fioSdk.isAvailable(testFioAddressName)
 
     expect(result.is_registered).to.equal(1)
   })
 
   it(`getFioBalance for custom fioPublicKey`, async () => {
-    const result = await fioSdk.genericAction('getFioBalance', {
-      fioPublicKey: publicKey2
-    })
+    const result = await fioSdk.getFioBalance(fioSdk2.publicKey)
 
     expect(result).to.have.all.keys('balance')
     expect(result.balance).to.be.a('number')
   })
 
-
   it(`getFioAddresses`, async () => {
     try {
-      const result = await fioSdk.genericAction('getFioAddresses', { fioPublicKey: publicKey })
+      const result = await fioSdk.get(EndPoint.getAddresses, { fio_public_key: fioSdk.publicKey })
 
       expect(result).to.have.all.keys('fio_addresses','more')
       expect(result.fio_addresses).to.be.a('array')
@@ -434,27 +408,21 @@ const generalTests = (fioSdk, fioSdk2, {
     }
   })
 
-
   it(`getPublicAddress`, async () => {
-    const result = await fioSdk.genericAction('getPublicAddress', {
-      fioAddress: newFioAddress, chainCode: fioChainCode, tokenCode: fioTokenCode
-    })
+    const result = await fioSdk.getPublicAddress(newFioAddress, fioChainCode, fioTokenCode)
 
     expect(result.public_address).to.be.a('string')
   })
 
   it(`getFee`, async () => {
-    const result = await fioSdk.genericAction('getFee', {
-      endPoint: 'register_fio_address',
-      fioAddress: ''
-    })
+    const result = await fioSdk.getFee(EndPoint.registerFioAddress)
 
     expect(result).to.have.all.keys('fee')
     expect(result.fee).to.be.a('number')
   })
 
   it(`getMultiplier`, async () => {
-    const result = await fioSdk.genericAction('getMultiplier', {})
+    const result = await fioSdk.getMultiplier()
 
     expect(result).to.be.a('number')
   })

@@ -1,4 +1,5 @@
 const { expect } = require('chai')
+const { EndPoint } = require('../../lib/entities/EndPoint')
 const { SignedTransaction } = require('../../lib/transactions/signed/SignedTransaction')
 const { Constants } = require('../../lib/utils/constants')
 
@@ -10,15 +11,14 @@ const recordObt = (fioSdk, fioSdk2, {
   fioChainCode,
   fioTokenCode,
   generateObtId,
+  defaultFee,
   timeout
 }) => {
   const obtId = generateObtId()
   const fundsAmount = 4.5
 
   it(`getFee for recordObtData`, async () => {
-    const result = await fioSdk.genericAction('getFeeForRecordObtData', {
-      payerFioAddress: testFioAddressName
-    })
+    const result = await fioSdk.getFee(EndPoint.recordObtData, testFioAddressName) // payerFioAddress
 
     expect(result).to.have.all.keys('fee')
     expect(result.fee).to.be.a('number')
@@ -53,7 +53,16 @@ const recordObt = (fioSdk, fioSdk2, {
 
   it(`Payer getObtData`, async () => {
     await timeout(4000)
-    const result = await fioSdk.genericAction('getObtData', { tokenCode: fioTokenCode })
+    const result = await fioSdk.get(
+      EndPoint.getObtData, {
+        fio_public_key: fioSdk.publicKey
+      }, {
+        decrypt: {
+          key: 'obt_data_records',
+          contentType: Constants.CipherContentTypes.record_obt_data_content
+        }
+      }
+    )
     expect(result).to.have.all.keys('obt_data_records', 'more')
     expect(result.obt_data_records).to.be.a('array')
     expect(result.more).to.be.a('number')
@@ -68,7 +77,16 @@ const recordObt = (fioSdk, fioSdk2, {
   })
 
   it(`Payee getObtData`, async () => {
-    const result = await fioSdk2.genericAction('getObtData', { tokenCode: fioTokenCode })
+    const result = await fioSdk2.get(
+      EndPoint.getObtData, {
+        fio_public_key: fioSdk2.publicKey
+      }, {
+        decrypt: {
+          key: 'obt_data_records',
+          contentType: Constants.CipherContentTypes.record_obt_data_content
+        }
+      }
+    )
     expect(result).to.have.all.keys('obt_data_records', 'more')
     expect(result.obt_data_records).to.be.a('array')
     expect(result.more).to.be.a('number')

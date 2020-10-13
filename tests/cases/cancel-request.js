@@ -1,4 +1,5 @@
 const { expect } = require('chai')
+const { EndPoint } = require('../../lib/entities/EndPoint')
 const { SignedTransaction } = require('../../lib/transactions/signed/SignedTransaction')
 const { Constants } = require('../../lib/utils/constants')
 
@@ -9,6 +10,7 @@ const cancelRequest = (fioSdk, fioSdk2, {
   testFioAddressName2,
   fioChainCode,
   fioTokenCode,
+  defaultFee,
   timeout
 }) => {
   const fundsAmount = 3
@@ -59,7 +61,14 @@ const cancelRequest = (fioSdk, fioSdk2, {
   it(`getCancelledFioRequests`, async () => {
     try{
       await timeout(4000)
-      const result = await fioSdk2.genericAction('getCancelledFioRequests', {})
+      const result = await fioSdk2.get(EndPoint.cancelledFioRequests, {
+        fio_public_key: fioSdk.publicKey
+      }, {
+        decrypt: {
+          key: 'requests',
+          contentType: Constants.CipherContentTypes.new_funds_content
+        }
+      })
       expect(result).to.have.all.keys('requests', 'more')
       expect(result.requests).to.be.a('array')
       expect(result.more).to.be.a('number')
