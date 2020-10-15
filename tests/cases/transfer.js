@@ -2,8 +2,7 @@ const { expect } = require('chai')
 const { FIOSDK } = require('../../lib/FIOSDK')
 const { Constants } = require('../../lib/utils/constants')
 
-const transfer = (fioSdk, fioSdk2, {
-  publicKey2,
+const transfer = ({
   defaultFee,
   timeout
 }) => {
@@ -19,14 +18,15 @@ const transfer = (fioSdk, fioSdk2, {
 
   it(`Transfer tokens`, async () => {
     const result = await fioSdk.pushTransaction(Constants.actionNames.trnsfiopubky, {
-      payee_public_key: publicKey2,
+      payee_public_key: fioSdk2.publicKey,
       amount: `${fundsAmount}`,
       max_fee: defaultFee,
     }, {
       additionalReturnKeys: {
         transaction_id: ['transaction_id'],
         block_num: ['processed', 'block_num']
-      }
+      },
+      account: Constants.abiAccounts.fio_token
     })
 
     expect(result).to.have.all.keys('status', 'fee_collected', 'transaction_id', 'block_num')

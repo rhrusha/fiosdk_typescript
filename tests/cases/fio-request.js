@@ -3,7 +3,7 @@ const { SignedTransaction } = require('../../lib/transactions/signed/SignedTrans
 const { EndPoint } = require('../../lib/entities/EndPoint')
 const { Constants } = require('../../lib/utils/constants')
 
-const fioRequest = (fioSdk, fioSdk2, {
+const fioRequest = ({
   testFioAddressName,
   testFioAddressName2,
   fioChainCode,
@@ -39,6 +39,8 @@ const fioRequest = (fioSdk, fioSdk2, {
       payee_fio_address: testFioAddressName2,
       max_fee: defaultFee,
       content: trx.getCipherContent(Constants.CipherContentTypes.new_funds_content, content, fioSdk2.privateKey, fioSdk.publicKey)
+    }, {
+      account: Constants.abiAccounts.fio_reqobt
     })
     requestId = result.fio_request_id
     expect(result).to.have.all.keys('fio_request_id', 'status', 'fee_collected')
@@ -90,6 +92,8 @@ const fioRequest = (fioSdk, fioSdk2, {
       content: trx.getCipherContent(Constants.CipherContentTypes.record_obt_data_content, content, fioSdk.privateKey, fioSdk2.publicKey),
       fio_request_id: requestId,
       max_fee: defaultFee,
+    }, {
+      account: Constants.abiAccounts.fio_reqobt
     })
     expect(result).to.have.all.keys('status', 'fee_collected')
     expect(result.status).to.be.a('string')

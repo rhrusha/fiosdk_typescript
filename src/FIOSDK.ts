@@ -298,13 +298,15 @@ export class FIOSDK {
    * @param options Options
    * @param options.account Account name
    * @param options.additionalReturnKeys Additional keys for response object from api result
+   * @param options.returnPreparedTrx Would return prepared transaction if true
    */
   public pushTransaction(
     action: string,
     data: any,
     options: {
       account?: string,
-      additionalReturnKeys?: { [key: string]: string[] }
+      additionalReturnKeys?: { [key: string]: string[] },
+      returnPreparedTrx?: boolean
     } = {}
   ): Promise<any> {
     data.tpid = this.getTechnologyProviderId(data.tpid)
@@ -313,7 +315,7 @@ export class FIOSDK {
       data,
       options
     )
-    return pushTransaction.execute(this.privateKey, this.publicKey, this.returnPreparedTrx)
+    return pushTransaction.execute(this.privateKey, this.publicKey, this.returnPreparedTrx || options.returnPreparedTrx)
   }
 
   public get(
@@ -332,7 +334,7 @@ export class FIOSDK {
       data,
       options
     )
-    return get.execute(this.privateKey, this.publicKey)
+    return get.execute(this.publicKey, this.privateKey)
   }
 
   /**

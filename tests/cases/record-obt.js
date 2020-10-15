@@ -3,9 +3,7 @@ const { EndPoint } = require('../../lib/entities/EndPoint')
 const { SignedTransaction } = require('../../lib/transactions/signed/SignedTransaction')
 const { Constants } = require('../../lib/utils/constants')
 
-const recordObt = (fioSdk, fioSdk2, {
-  publicKey,
-  publicKey2,
+const recordObt = ({
   testFioAddressName,
   testFioAddressName2,
   fioChainCode,
@@ -26,8 +24,8 @@ const recordObt = (fioSdk, fioSdk2, {
 
   it(`recordObtData`, async () => {
     const content = {
-      payer_public_address: publicKey,
-      payee_public_address: publicKey2,
+      payer_public_address: fioSdk.publicKey,
+      payee_public_address: fioSdk2.publicKey,
       amount: `${fundsAmount}`,
       chain_code: fioChainCode,
       token_code: fioTokenCode,
@@ -41,9 +39,11 @@ const recordObt = (fioSdk, fioSdk2, {
     const result = await fioSdk.pushTransaction(Constants.actionNames.recordobt, {
       payer_fio_address: testFioAddressName,
       payee_fio_address: testFioAddressName2,
-      content: trx.getCipherContent(Constants.CipherContentTypes.record_obt_data_content, content, fioSdk.privateKey, publicKey2),
+      content: trx.getCipherContent(Constants.CipherContentTypes.record_obt_data_content, content, fioSdk.privateKey, fioSdk2.publicKey),
       fio_request_id: '',
       max_fee: defaultFee,
+    }, {
+      account: Constants.abiAccounts.fio_reqobt
     })
 
     expect(result).to.have.all.keys('status', 'fee_collected')

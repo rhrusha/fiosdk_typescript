@@ -10,7 +10,7 @@ const {
   encryptDecrypt,
 } = require('./cases')
 const { FIOSDK } = require('../lib/FIOSDK')
-const { SignedTransaction } = require('../../lib/transactions/signed/SignedTransaction')
+const { SignedTransaction } = require('../lib/transactions/signed/SignedTransaction')
 const { EndPoint } = require('../lib/entities/EndPoint')
 const { Constants } = require('../lib/utils/constants')
 
@@ -39,7 +39,8 @@ const ethTokenCode = 'ETH'
 const ethChainCode = 'ETH'
 const defaultFee = 800 * FIOSDK.SUFUnit
 
-let fioSdk, fioSdk2
+global.fioSdk = null
+global.fioSdk2 = null
 
 const generateTestingFioAddress = (customDomain = fioTestnetDomain) => {
   return `testing${Date.now()}@${customDomain}`
@@ -69,7 +70,7 @@ const defaultTestParams = {
 }
 
 before(async () => {
-  fioSdk = new FIOSDK(
+  global.fioSdk = new FIOSDK(
     privateKey,
     publicKey,
     baseUrl,
@@ -77,7 +78,7 @@ before(async () => {
   )
 
   await timeout(1000)
-  fioSdk2 = new FIOSDK(
+  global.fioSdk2 = new FIOSDK(
     privateKey2,
     publicKey2,
     baseUrl,
@@ -118,7 +119,7 @@ before(async () => {
   await timeout(4000)
 })
 
-describe('Testing generic actions', () => generalTests(fioSdk, fioSdk2, {
+describe('Testing generic actions', () => generalTests({
   ...defaultTestParams,
   ethTokenCode,
   ethChainCode,
@@ -126,23 +127,23 @@ describe('Testing generic actions', () => generalTests(fioSdk, fioSdk2, {
   generateTestingFioAddress
 }))
 
-describe('Request funds, approve and send', () => fioRequest(fioSdk, fioSdk2, {
+describe('Request funds, approve and send', () => fioRequest({
   ...defaultTestParams
 }))
 
-describe('Request funds, cancel funds request', () => cancelRequest(fioSdk, fioSdk2, {
+describe('Request funds, cancel funds request', () => cancelRequest({
   ...defaultTestParams
 }))
 
-describe('Request funds, reject', () => rejectRequest(fioSdk, fioSdk2, {
+describe('Request funds, reject', () => rejectRequest({
   ...defaultTestParams
 }))
 
-describe('Transfer tokens', () => transfer(fioSdk, fioSdk2, {
+describe('Transfer tokens', () => transfer({
   ...defaultTestParams
 }))
 
-describe('Record obt data, check', () => recordObt(fioSdk, fioSdk2, {
+describe('Record obt data, check', () => recordObt({
   ...defaultTestParams,
   generateObtId
 }))
@@ -168,6 +169,8 @@ describe('Check prepared transaction', () => {
       payee_fio_address: testFioAddressName2,
       max_fee: defaultFee,
       content: trx.getCipherContent(Constants.CipherContentTypes.new_funds_content, content, fioSdk2.privateKey, publicKey)
+    }, {
+      account: Constants.abiAccounts.fio_reqobt
     })
 
     const result = await fioSdk2.executePreparedTrx(EndPoint.newFundsRequest, preparedTrx)

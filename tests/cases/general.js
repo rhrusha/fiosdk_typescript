@@ -1,11 +1,10 @@
-import {EndPoint} from "../../src/entities/EndPoint";
-
 const { expect } = require('chai')
 const { FIOSDK } = require('../../lib/FIOSDK')
 const { Constants } = require('../../lib/utils/constants')
+const { EndPoint } = require('../../lib/entities/EndPoint')
 
 const actionNames = Constants.actionNames
-const generalTests = (fioSdk, fioSdk2, {
+const generalTests = ({
   testFioAddressName,
   testFioAddressName2,
   ethChainCode,
@@ -359,7 +358,7 @@ const generalTests = (fioSdk, fioSdk2, {
   it(`Remove all public addresses`, async () => {
     await fioSdk.pushTransaction(actionNames.addaddress, {
       fio_address: newFioAddress,
-      publicAddresses: [
+      public_addresses: [
         {
           chain_code: ethChainCode,
           token_code: ethTokenCode,

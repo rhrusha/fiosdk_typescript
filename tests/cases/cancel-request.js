@@ -3,9 +3,7 @@ const { EndPoint } = require('../../lib/entities/EndPoint')
 const { SignedTransaction } = require('../../lib/transactions/signed/SignedTransaction')
 const { Constants } = require('../../lib/utils/constants')
 
-const cancelRequest = (fioSdk, fioSdk2, {
-  publicKey,
-  publicKey2,
+const cancelRequest = ({
   testFioAddressName,
   testFioAddressName2,
   fioChainCode,
@@ -19,8 +17,8 @@ const cancelRequest = (fioSdk, fioSdk2, {
 
   it(`requestFunds`, async () => {
     const content = {
-      payer_fio_public_key: publicKey,
-      payee_public_address: publicKey2,
+      payer_fio_public_key: fioSdk.publicKey,
+      payee_public_address: fioSdk2.publicKey,
       amount: `${fundsAmount}`,
       chain_code: fioChainCode,
       token_code: fioTokenCode,
@@ -33,7 +31,9 @@ const cancelRequest = (fioSdk, fioSdk2, {
       payer_fio_address: testFioAddressName,
       payee_fio_address: testFioAddressName2,
       max_fee: defaultFee,
-      content: trx.getCipherContent(Constants.CipherContentTypes.new_funds_content, content, fioSdk2.privateKey, publicKey)
+      content: trx.getCipherContent(Constants.CipherContentTypes.new_funds_content, content, fioSdk2.privateKey, fioSdk.publicKey)
+    }, {
+      account: Constants.abiAccounts.fio_reqobt
     })
 
     requestId = result.fio_request_id
@@ -48,6 +48,8 @@ const cancelRequest = (fioSdk, fioSdk2, {
       const result = await fioSdk2.pushTransaction(Constants.actionNames.cancelfndreq, {
         fio_request_id: requestId,
         max_fee: defaultFee
+      }, {
+        account: Constants.abiAccounts.fio_reqobt
       })
       expect(result).to.have.all.keys('status', 'fee_collected')
       expect(result.status).to.be.a('string')
@@ -62,7 +64,7 @@ const cancelRequest = (fioSdk, fioSdk2, {
     try{
       await timeout(4000)
       const result = await fioSdk2.get(EndPoint.cancelledFioRequests, {
-        fio_public_key: fioSdk.publicKey
+        fio_public_key: fioSdk2.publicKey
       }, {
         decrypt: {
           key: 'requests',

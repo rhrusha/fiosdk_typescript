@@ -3,9 +3,7 @@ const { EndPoint } = require('../../lib/entities/EndPoint')
 const { SignedTransaction } = require('../../lib/transactions/signed/SignedTransaction')
 const { Constants } = require('../../lib/utils/constants')
 
-const rejectRequest = (fioSdk, fioSdk2, {
-  publicKey,
-  publicKey2,
+const rejectRequest = ({
   testFioAddressName,
   testFioAddressName2,
   fioChainCode,
@@ -19,8 +17,8 @@ const rejectRequest = (fioSdk, fioSdk2, {
 
   it(`requestFunds`, async () => {
     const content = {
-      payer_fio_public_key: publicKey,
-      payee_public_address: publicKey2,
+      payer_fio_public_key: fioSdk.publicKey,
+      payee_public_address: fioSdk2.publicKey,
       amount: `${fundsAmount}`,
       chain_code: fioChainCode,
       token_code: fioTokenCode,
@@ -33,7 +31,9 @@ const rejectRequest = (fioSdk, fioSdk2, {
       payer_fio_address: testFioAddressName,
       payee_fio_address: testFioAddressName2,
       max_fee: defaultFee,
-      content: trx.getCipherContent(Constants.CipherContentTypes.new_funds_content, content, fioSdk2.privateKey, publicKey)
+      content: trx.getCipherContent(Constants.CipherContentTypes.new_funds_content, content, fioSdk2.privateKey, fioSdk.publicKey)
+    }, {
+      account: Constants.abiAccounts.fio_reqobt
     })
 
     requestId = result.fio_request_id
@@ -68,7 +68,7 @@ const rejectRequest = (fioSdk, fioSdk2, {
   })
 
   it(`getFee for rejectFundsRequest`, async () => {
-    const result = await fioSdk.getFee('getFeeForRejectFundsRequest', testFioAddressName2) // payerFioAddress
+    const result = await fioSdk.getFee(EndPoint.rejectFundsRequest, testFioAddressName2) // payerFioAddress
 
     expect(result).to.have.all.keys('fee')
     expect(result.fee).to.be.a('number')
@@ -77,7 +77,9 @@ const rejectRequest = (fioSdk, fioSdk2, {
   it(`rejectFundsRequest`, async () => {
     const result = await fioSdk.pushTransaction(Constants.actionNames.rejectfndreq, {
       fio_request_id: requestId,
-      maxFee: defaultFee,
+      max_fee: defaultFee,
+    }, {
+      account: Constants.abiAccounts.fio_reqobt
     })
 
     expect(result).to.have.all.keys('status', 'fee_collected')
